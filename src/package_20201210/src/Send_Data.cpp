@@ -15,6 +15,11 @@ int main(int argc, char** argv)
 	
 	while (ros::ok())
 	{
+		if (count * count > 4294967290)
+		{
+			count = 0;
+		}
+		
 		msg.Data1 = count;
 		msg.Data2 = count * count;
 		
