@@ -1,0 +1,11 @@
+<launch>
+ <group ns="1">
+  <node pkg="package_20201210" type="Read_Data" name="Read_Data1"/>
+  <node pkg="package_20201210" type="Send_Data" name="Send_Data1"/>
+ </group>
+ 
+ <group ns="2">
+ <node pkg="package_20201210" type="Read_Data" name="Read_Data2"/>
+ <node pkg="package_20201210" type="Send_Data" name="Send_Data2"/>
+ </group>
+</launch>
