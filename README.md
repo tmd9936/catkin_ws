@@ -70,7 +70,9 @@ alias sb='source ~/.bashrc'
 Publisher와 Subscriber의 토픽들 확인
 - rostopic list -v
 
-
+# 패키지 지우기
+- rm -r ~/catkin_ws/buiid/패키지명
+- rm -r ~/catkin_ws/src/패키지명
 
 # 번외 (turtlesim)
 GUI화면 노드
