@@ -38,6 +38,7 @@
 
 #if defined(_WIN32) && !defined(__MINGW32__)
 
+// ROS 변수의 기본 타입을 ROS용어로 재정의
 typedef signed char int8_t;
 typedef unsigned char uint8_t;
 typedef short int16_t;  // NOLINT

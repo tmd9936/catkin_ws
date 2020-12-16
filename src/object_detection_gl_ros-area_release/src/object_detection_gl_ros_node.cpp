@@ -18,11 +18,13 @@ public:
     void PubMarker(void);
     void InitArea(void);
 
+// 변수 선언부
 private:
-    // ros
+    // ROS 시스템과 통신을 위한 노드 핸들 선언
     ros::NodeHandle nh;
     ros::NodeHandle nh_priv{"~"};
 
+    // 퍼블리셔 선언
     ros::Publisher data_pub;
     ros::Publisher rviz_pub;
 
