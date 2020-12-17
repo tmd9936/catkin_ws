@@ -19,6 +19,10 @@
         <param name="area_on" type="bool" value="true"/>
   </node>
 
+  <node pkg="object_detection_gl_ros" type="text_subscriber" name="text_subscriber">
+    
+  </node>
+
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find object_detection_gl_ros)/rviz/config.rviz" />
 
 </launch>

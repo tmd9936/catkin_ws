@@ -46,3 +46,18 @@ add_dependencies(${PROJECT_NAME}_node
   ${catkin_EXPORTED_TARGETS}
   ${GL_LIBRARY}
 )
+
+add_executable(text_subscriber
+  src/text_subscriber.cpp
+)
+
+target_link_libraries(text_subscriber
+  ${catkin_LIBRARIES}
+  ${GL_LIBRARY}
+
+)
+add_dependencies(text_subscriber
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+  ${GL_LIBRARY}
+)
