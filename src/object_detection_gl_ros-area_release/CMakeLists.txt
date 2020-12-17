@@ -47,6 +47,7 @@ add_dependencies(${PROJECT_NAME}_node
   ${GL_LIBRARY}
 )
 
+# 테스트용 
 add_executable(text_subscriber
   src/text_subscriber.cpp
 )

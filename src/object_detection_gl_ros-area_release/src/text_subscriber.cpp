@@ -12,8 +12,14 @@
 //     ROS_INFO("range_max=%lf", scan_msg->range_max);
 // }
 
+// python 퍼블리셔 생성해서 받기
+
 void msgCallback(const visualization_msgs::MarkerArray::ConstPtr& marker_array_msg)
 {
+    ROS_INFO("marker_array_msg->markers[0].color.r = %f", marker_array_msg->markers[0].color.r);
+    ROS_INFO("marker_array_msg->markers[0].color.g = %f", marker_array_msg->markers[0].color.g);
+    ROS_INFO("marker_array_msg->markers[0].color.b = %f", marker_array_msg->markers[0].color.b);
+
     ROS_INFO("markers");
 }
 

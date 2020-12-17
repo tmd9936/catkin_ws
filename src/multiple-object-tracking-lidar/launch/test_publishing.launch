@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<launch>
+    <node pkg="multi_object_tracking_lidar" type="kf_tracker" name="kf_tracker">
+        
+    </node>
+    <node pkg="multi_object_tracking_lidar" type="test_publisher" name="test_publisher">
+        
+    </node>
+</launch>
