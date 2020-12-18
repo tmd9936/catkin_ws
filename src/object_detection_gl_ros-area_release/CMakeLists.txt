@@ -6,6 +6,8 @@ message( STATUS "Architecture: ${ARCHITECTURE}" )
 set( LIBRARY_PATH "${PROJECT_SOURCE_DIR}/lib/${ARCHITECTURE}" )
 set( GL_LIBRARY "${LIBRARY_PATH}/libobject_detection.so" "${LIBRARY_PATH}/libgl_driver.so" "${LIBRARY_PATH}/libserial.so" )
 
+set(CMAKE_CXX_STANDARD 14)
+
 add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -13,7 +15,11 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   visualization_msgs 
   geometry_msgs
+  pcl_ros
+  laser_geometry
 )
+
+find_package( OpenCV REQUIRED )
 
 ###################################
 ## catkin specific configuration ##
@@ -30,6 +36,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 add_executable(${PROJECT_NAME}_node
@@ -47,18 +54,38 @@ add_dependencies(${PROJECT_NAME}_node
   ${GL_LIBRARY}
 )
 
-# 테스트용 
-add_executable(text_subscriber
-  src/text_subscriber.cpp
+# 라이다와 opencv연결 
+add_executable(lidar_data_process
+  src/lidar_data_process.cpp
 )
 
-target_link_libraries(text_subscriber
+target_link_libraries(lidar_data_process
   ${catkin_LIBRARIES}
   ${GL_LIBRARY}
 
 )
-add_dependencies(text_subscriber
+add_dependencies(lidar_data_process
   ${${PROJECT_NAME}_EXPORTED_TARGETS} 
   ${catkin_EXPORTED_TARGETS}
   ${GL_LIBRARY}
+)
+
+# opencv
+add_executable( kf_tracker src/main.cpp )
+
+target_link_libraries ( kf_tracker 
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES} 
+)
+
+add_dependencies(kf_tracker
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+)
+
+## Mark executables and/or libraries for installation
+install(TARGETS kf_tracker
+	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
