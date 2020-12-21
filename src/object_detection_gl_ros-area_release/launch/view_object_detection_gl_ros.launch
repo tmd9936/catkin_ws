@@ -19,6 +19,14 @@
         <param name="area_on" type="bool" value="true"/>
   </node>
 
+  <node pkg="object_detection_gl_ros" type="lidar_data_process" name="lidar_data_process">
+    
+  </node>
+
+  <node pkg="object_detection_gl_ros" type="kf_tracker" name="kf_tracker">
+        
+  </node>
+
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find object_detection_gl_ros)/rviz/config.rviz" />
 
 </launch>

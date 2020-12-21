@@ -9,7 +9,7 @@
 #define STATE_UPDATE	2
 #define STATE_DOWN		3
 
-
+// 라이다로 검출된 오브젝트들
 class ObjDetect
 {
 public:
