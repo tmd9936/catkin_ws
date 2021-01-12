@@ -1,0 +1,6 @@
+<launch>
+    <node pkg="camera_opencv" type="camera_opencv_node" name="camera_opencv_node" args="0">
+        
+    </node>
+    <node pkg="test_pakage" type="test_node" name="test_node"></node>
+</launch>
