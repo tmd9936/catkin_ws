@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   rosserial_client
   std_msgs
   sensor_msgs
+  camera_opencv
 )
 
 
