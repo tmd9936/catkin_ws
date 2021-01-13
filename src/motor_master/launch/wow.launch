@@ -1,7 +1,7 @@
 <launch>
 	<node pkg="motor_master" type="motor_interface" name="motor_interface"/>
-	<node pkg="sonar_interface" type="bus_stop_interface" name="bus_stop_interface"/>
-	<node pkg="camera_opencv" type="camera_opencv_node" name="camera_opencv_node"/>
+	<!-- <node pkg="sonar_interface" type="bus_stop_interface" name="bus_stop_interface"/> -->
+	<!-- <node pkg="camera_opencv" type="camera_opencv_node" name="camera_opencv_node"/> -->
 	
 	<arg name="arduino_port" default="/dev/ttyUSB1"/>
 
