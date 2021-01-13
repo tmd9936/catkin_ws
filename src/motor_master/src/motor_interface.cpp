@@ -34,6 +34,8 @@ int left_dist = 0;
 int flag = 0;
 int sub_flag = 0;
 
+float duration_sec = 0;
+
 std::mutex  m; 
 
 void LidarCallback(const object_detection_gl_ros::Distance::ConstPtr &msg) {
@@ -69,6 +71,7 @@ int main(int argc, char **argv)
 
 		begin_s = ros::Time::now();
 		if(flag == DRIVE_MODE){
+			duration_sec = 0;
 			if(front_dist < 40 && front_dist > 0){
 				flag = BLOCK_MODE;
 				sub_flag = 0;
@@ -93,42 +96,43 @@ int main(int argc, char **argv)
 		{
 			if(sub_flag == DIST_INIT_MODE)
 			{
-				if(front_dist < 30 && front_dist > 0)
+				if(front_dist > 30 && front_dist != 0)
 				{
 					motor_msg.data = 30;
+					duration_sec = 0;
 				}
 				else
 				{
 					motor_msg.data = 0;
 					sub_flag = RIGHT_TURN_MODD;
-					ros::Duration(0.1).sleep();
+					duration_sec = 0.1;
 				}
 			}
 			else if(sub_flag == RIGHT_TURN_MODD)
 			{
 				motor_msg.data = 0;
 				servo_msg.data = 120;
-				ros::Duration(3).sleep();
+				duration_sec = 1;
 				sub_flag = RT_AND_GO_MODE;
 				
 			}
 			else if(sub_flag == RT_AND_GO_MODE)
 			{
 				motor_msg.data = 30;
-				ros::Duration(1).sleep();
+				duration_sec = 0.5;
 				sub_flag = BLOCK_LEFT_TURN_MODE;
 			}
 			else if(sub_flag == BLOCK_LEFT_TURN_MODE)
 			{
 				motor_msg.data = 0;
 				servo_msg.data = 30;
-				ros::Duration(3).sleep();
+				duration_sec = 1;
 				sub_flag = BLOCK_LT_AND_GO_MODE;
 			}
 			else if(sub_flag == BLOCK_LT_AND_GO_MODE)
 			{
 				motor_msg.data = 30;
-				ros::Duration(1).sleep();
+				duration_sec = 0.5;
 				sub_flag = BLOCK_PASS_MODE;
 			}
 			else if(sub_flag == BLOCK_PASS_MODE)
@@ -137,10 +141,12 @@ int main(int argc, char **argv)
 				if(front_dist > 0 && front_dist < 15)
 				{
 					motor_msg.data = 15;
+					duration_sec = 0;
 				}
 				else
 				{
 					motor_msg.data = 0;
+					duration_sec = 0.5;
 					sub_flag = LINE_LEFT_TURN_MODE;
 				}
 			}
@@ -148,13 +154,13 @@ int main(int argc, char **argv)
 			{
 				motor_msg.data = 0;
 				servo_msg.data = 30;
-				ros::Duration(3).sleep();
+				duration_sec = 1;
 				sub_flag = LINE_LT_AND_GO_MODE;
 			}
 			else if(sub_flag == LINE_LT_AND_GO_MODE)
 			{
 				motor_msg.data = 30;
-				ros::Duration(1).sleep();
+				duration_sec = 0.5;
 				sub_flag = LINE_CHECK_MODE;
 			}
 			else if(sub_flag == LINE_CHECK_MODE)
@@ -179,8 +185,11 @@ int main(int argc, char **argv)
 		motor_val.publish(motor_msg);
 		servo_val.publish(servo_msg);
 		front_dist = 0; 
+		ros::Duration(duration_sec).sleep();
+		
+		ros::spinOnce();
 	    loop_rate.sleep();
-		//ros::spinOnce();
+		
 	
 	}
 

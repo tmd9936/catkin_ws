@@ -26,9 +26,11 @@ ros::NodeHandle  nh;
 
 Servo servo;
 
-int motorDirPin = 8;
-int motorPWMPin = 9;
+int motorDirPin = 9;
+int motorPWMPin = 5;
 
+int motor_val = 30;
+int pre_motor_val = 30;
 
 //void doTurn(bool dir, int vel){
 //  digitalWrite(motorDirPin, dir);
@@ -41,24 +43,36 @@ void servo_cb( const std_msgs::UInt16& cmd_msg){
 }
 
 void motor_cb( const std_msgs::UInt16& motor_msg){
-  digitalWrite(8,HIGH);
-  analogWrite(9,motor_msg.data);
+  if(motor_msg.data == 0)
+  {
+    digitalWrite(motorDirPin, LOW);
+    analogWrite(motorPWMPin, 0);
+  }
+  else if(motor_msg.data > 0 && motor_msg.data < 100)
+  {
+    digitalWrite(motorDirPin, LOW);
+    analogWrite(motorPWMPin, motor_val);
+  }
+  else{}
 
+  //Serial.println(motor_msg.data);
 }
 
 ros::Subscriber<std_msgs::UInt16> sub("servo_val", servo_cb);
 ros::Subscriber<std_msgs::UInt16> sub2("motor_val", motor_cb);
 
 void setup(){
-  pinMode(13, OUTPUT);
-  pinMode(8, OUTPUT);
+  pinMode(motorDirPin, OUTPUT);
+  pinMode(motorPWMPin, OUTPUT);
 
   nh.initNode();
   nh.subscribe(sub);
   nh.subscribe(sub2);
   //Serial.begin(9600);
   
-  servo.attach(9); //attach it to pin 9
+  servo.attach(10); //attach it to pin 9
+
+  servo.write(75);
 }
 
 void loop(){
