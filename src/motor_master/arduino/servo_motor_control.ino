@@ -43,14 +43,14 @@ void servo_cb( const std_msgs::UInt16& cmd_msg){
 }
 
 void motor_cb( const std_msgs::UInt16& motor_msg){
+  digitalWrite(motorDirPin, LOW);
   if(motor_msg.data == 0)
   {
-    digitalWrite(motorDirPin, LOW);
+    
     analogWrite(motorPWMPin, 0);
   }
   else if(motor_msg.data > 0 && motor_msg.data < 100)
   {
-    digitalWrite(motorDirPin, LOW);
     analogWrite(motorPWMPin, motor_val);
   }
   else{}

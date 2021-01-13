@@ -61,7 +61,7 @@ int main(int argc, char **argv)
 
 	ros::AsyncSpinner spinner(1);  //spin
     spinner.start();
-    ros::Rate loop_rate(20);	
+    ros::Rate loop_rate(50);	
 
 	ros::Time begin_s;
 
@@ -72,7 +72,7 @@ int main(int argc, char **argv)
 		begin_s = ros::Time::now();
 		if(flag == DRIVE_MODE){
 			duration_sec = 0;
-			if(front_dist < 40 && front_dist > 0){
+			if(front_dist < 30 && front_dist > 0){
 				flag = BLOCK_MODE;
 				sub_flag = 0;
 			}
@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 			//}
 			else
 			{
-				// 서보모터 각도 받아서 바꾸기
+				// opencv에서 차선 각도 받아서 서보모터 각도 바꾸기
 				servo_msg.data = 75;
 				motor_msg.data = 30;
 			}
@@ -96,17 +96,9 @@ int main(int argc, char **argv)
 		{
 			if(sub_flag == DIST_INIT_MODE)
 			{
-				if(front_dist > 30 && front_dist != 0)
-				{
-					motor_msg.data = 30;
-					duration_sec = 0;
-				}
-				else
-				{
-					motor_msg.data = 0;
-					sub_flag = RIGHT_TURN_MODD;
-					duration_sec = 0.1;
-				}
+				motor_msg.data = 0;
+				sub_flag = RIGHT_TURN_MODD;
+				duration_sec = 3;
 			}
 			else if(sub_flag == RIGHT_TURN_MODD)
 			{
@@ -119,7 +111,7 @@ int main(int argc, char **argv)
 			else if(sub_flag == RT_AND_GO_MODE)
 			{
 				motor_msg.data = 30;
-				duration_sec = 0.5;
+				duration_sec = 2;
 				sub_flag = BLOCK_LEFT_TURN_MODE;
 			}
 			else if(sub_flag == BLOCK_LEFT_TURN_MODE)
@@ -132,52 +124,55 @@ int main(int argc, char **argv)
 			else if(sub_flag == BLOCK_LT_AND_GO_MODE)
 			{
 				motor_msg.data = 30;
-				duration_sec = 0.5;
+				duration_sec = 1;
 				sub_flag = BLOCK_PASS_MODE;
 			}
 			else if(sub_flag == BLOCK_PASS_MODE)
 			{
 				servo_msg.data = 75;
-				if(front_dist > 0 && front_dist < 15)
+				if(left_dist > 0 && left_dist <= 15)
 				{
-					motor_msg.data = 15;
+					motor_msg.data = 30;
 					duration_sec = 0;
 				}
-				else
+				else if(left_dist > 15)
 				{
 					motor_msg.data = 0;
-					duration_sec = 0.5;
-					sub_flag = LINE_LEFT_TURN_MODE;
+					duration_sec = 2;
+					//sub_flag = LINE_LEFT_TURN_MODE;
+					sub_flag = 0;
+					flag = DRIVE_MODE;
 				}
+				else {}
 			}
-			else if(sub_flag == LINE_LEFT_TURN_MODE)
-			{
-				motor_msg.data = 0;
-				servo_msg.data = 30;
-				duration_sec = 1;
-				sub_flag = LINE_LT_AND_GO_MODE;
-			}
-			else if(sub_flag == LINE_LT_AND_GO_MODE)
-			{
-				motor_msg.data = 30;
-				duration_sec = 0.5;
-				sub_flag = LINE_CHECK_MODE;
-			}
-			else if(sub_flag == LINE_CHECK_MODE)
-			{
-				motor_msg.data = 15;
-				servo_msg.data = 120;
+			// else if(sub_flag == LINE_LEFT_TURN_MODE)
+			// {
+			// 	motor_msg.data = 0;
+			// 	servo_msg.data = 30;
+			// 	duration_sec = 1;
+			// 	sub_flag = LINE_LT_AND_GO_MODE;
+			// }
+			// else if(sub_flag == LINE_LT_AND_GO_MODE)
+			// {
+			// 	motor_msg.data = 30;
+			// 	duration_sec = 1;
+			// 	sub_flag = LINE_CHECK_MODE;
+			// }
+			// else if(sub_flag == LINE_CHECK_MODE)
+			// {
+			// 	motor_msg.data = 15;
+			// 	servo_msg.data = 120;
 
-				// if(line_state == 0) // opencv에서 받은 라인의 각도가 0이 되면 빠져나가기
-				//{
-				ros::Duration(3).sleep();
-				servo_msg.data = 75;
-				ros::Duration(1).sleep();
-				sub_flag = 0;
-				flag = DRIVE_MODE;
-				//}
+			// 	// if(line_state == 0) // opencv에서 받은 라인의 각도가 0이 되면 빠져나가기
+			// 	//{
+			// 	ros::Duration(1).sleep();
+			// 	servo_msg.data = 75;
+			// 	ros::Duration(1).sleep();
+			// 	sub_flag = 0;
+			// 	flag = DRIVE_MODE;
+			// 	//}
 
-			}
+			// }
 		
 		}
 		ROS_INFO("flag = %d,  sub_flag = %d, sec = %f ", flag, sub_flag, ros::Time::now() - begin_s);
@@ -186,7 +181,8 @@ int main(int argc, char **argv)
 		servo_val.publish(servo_msg);
 		front_dist = 0; 
 		ros::Duration(duration_sec).sleep();
-		
+		ROS_INFO("left distance %d", left_dist);
+
 		ros::spinOnce();
 	    loop_rate.sleep();
 		
