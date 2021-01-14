@@ -104,7 +104,7 @@ void cameraCallback(const camera_opencv::TrafficState::ConstPtr &msg)
 	traffic_color = msg->traffic_color;
 }
 
-void gettingOnStopCallback(condt std_msg::UIint8::ConstPtr &msg)
+void gettingOnStopCallback(const std_msg::UIint8::ConstPtr &msg)
 {
 	return;
 }
@@ -151,12 +151,12 @@ int main(int argc, char **argv)
 				flag = BLOCK_MODE;
 				sub_flag = 0;
 			}
-			else if (traffic_light = RED)
+			else if (traffic_color = RED)
 			{
 				flag = TRAFFIC_LIGHT_MODE;
 				motor_msg.data = 0;
 			}
-			else if(station_on == STATION_AREA_ON)
+			else if(station_area == STATION_AREA_ON)
 			{
 				flag = STATION_MODE;
 			}
@@ -181,12 +181,14 @@ int main(int argc, char **argv)
 		// 장애물 만날경우
 		else if (flag == BLOCK_MODE)
 		{
+			// 멈추기
 			if (sub_flag == DIST_INIT_MODE)
 			{
 				motor_msg.data = 0;
 				sub_flag = RIGHT_TURN_MODE;
 				duration_sec = 1.5;
 			}
+			//오른쪽으로 턴
 			else if (sub_flag == RIGHT_TURN_MODE)
 			{
 				motor_msg.data = 0;
@@ -194,12 +196,14 @@ int main(int argc, char **argv)
 				duration_sec = right_turn_mode_duration;
 				sub_flag = RT_AND_GO_MODE;
 			}
+			// 오른쪽으로 턴상태에서 움직이기
 			else if (sub_flag == RT_AND_GO_MODE)
 			{
 				motor_msg.data = basic_motor_pwm;
 				duration_sec = rt_and_go_mode_duration;
 				sub_flag = BLOCK_LEFT_TURN_MODE;
 			}
+			// 왼쪽으로 턴
 			else if (sub_flag == BLOCK_LEFT_TURN_MODE)
 			{
 				motor_msg.data = 0;
@@ -207,20 +211,24 @@ int main(int argc, char **argv)
 				duration_sec = block_left_turn_mode_duration;
 				sub_flag = BLOCK_LT_AND_GO_MODE;
 			}
+			// 왼쪾으로 턴 상태에서 움직이기
 			else if (sub_flag == BLOCK_LT_AND_GO_MODE)
 			{
 				motor_msg.data = basic_motor_pwm;
 				duration_sec = block_lt_and_go_mode_duration;
 				sub_flag = BLOCK_PASS_MODE;
 			}
+			// 장애물 지나가기
 			else if (sub_flag == BLOCK_PASS_MODE)
 			{
 				servo_msg.data = 75;
+				// 라이다에서 받은 맨왼쪽의 값이 15이하면 계속진행
 				if (left_dist > 0 && left_dist <= 15)
 				{
 					motor_msg.data = basic_motor_pwm;
 					duration_sec = 0;
 				}
+				// 15이상이면 장애물이 없다고 판단.
 				else if (left_dist > 15)
 				{
 					motor_msg.data = 0;
@@ -269,7 +277,7 @@ int main(int argc, char **argv)
 		else if (flag == TRAFFIC_LIGHT_MODE)
 		{
 			motor_msg.data = 0;
-			if (traffig_light == GREEN)
+			if (traffic_color == GREEN)
 			{
 				flag = DRIVE_MODE;
 			}
