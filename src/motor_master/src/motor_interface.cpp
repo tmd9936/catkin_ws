@@ -104,7 +104,7 @@ void cameraCallback(const camera_opencv::TrafficState::ConstPtr &msg)
 	traffic_color = msg->traffic_color;
 }
 
-void gettingOnStopCallback(const std_msg::UIint8::ConstPtr &msg)
+void gettingOnStopCallback(const std_msgs::UInt16::ConstPtr &msg)
 {
 	return;
 }
