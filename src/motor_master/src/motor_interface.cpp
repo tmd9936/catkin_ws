@@ -144,6 +144,7 @@ int main(int argc, char **argv)
 		// 주행모드
 		if (flag == DRIVE_MODE)
 		{
+			motor_msg.data = basic_motor_pwm;
 			duration_sec = 0;
 			// 앞의 장애물이 30이하면 멈추고 장애물 감지 모드로 변경
 			if (front_dist < 30 && front_dist > 0)
@@ -167,14 +168,19 @@ int main(int argc, char **argv)
 				if(line_state > -30 && line_state < 30)
 				{
 					servo_msg.data = 75 + (line_state * line_state_control);
+					if (servo_msg.data != pre_survo_val)
+					{
+						duration_sec = 0.1;
+						motor_msg.data = 15;
+					}
 				}  
 				else 
 				{
 					servo_msg.data = pre_survo_val;
 				}
+				
 
 				pre_survo_val = servo_msg.data;
-				motor_msg.data = basic_motor_pwm;
 
 			}
 		}
