@@ -53,6 +53,7 @@ int left_dist = 0;
 
 // opencv 관령 변수
 int line_state = 0;
+int is_two_line = 0;
 int station_area = 0;
 int traffic_color = GREEN;
 
@@ -70,7 +71,7 @@ std::mutex m;
 
 int line_state_control = 1;
 
-int pre_survo_val = 75;
+int pre_servo_val = 75;
 
 // launch 파일 파라미터
 void initParams(ros::NodeHandle *nh_priv)
@@ -102,6 +103,7 @@ void cameraCallback(const camera_opencv::TrafficState::ConstPtr &msg)
 	line_state = msg->line_state;
 	station_area = msg->station_area;
 	traffic_color = msg->traffic_color;
+	is_two_line = msg->is_two_line;
 }
 
 void gettingOnStopCallback(const std_msgs::UInt16::ConstPtr &msg)
@@ -165,10 +167,17 @@ int main(int argc, char **argv)
 			{
 				// opencv에서 차선 각도 받아서 서보모터 각도 바꾸기
 				// 이상치가 오면 전의 값으로 대체
-				if(line_state > -30 && line_state < 30)
+				if(line_state >= -75 && line_state <= 150)
 				{
 					servo_msg.data = 75 + (line_state * line_state_control);
-					if (servo_msg.data != pre_survo_val)
+					if(line_state == 0)
+					{
+						if(is_two_line == 0)
+						{
+							servo_msg.data = pre_servo_val;
+						}
+					}
+					if (servo_msg.data != pre_servo_val)
 					{
 						duration_sec = 0.1;
 						motor_msg.data = 15;
@@ -176,11 +185,10 @@ int main(int argc, char **argv)
 				}  
 				else 
 				{
-					servo_msg.data = pre_survo_val;
+					servo_msg.data = pre_servo_val;
 				}
 				
-
-				pre_survo_val = servo_msg.data;
+				pre_servo_val = servo_msg.data;
 
 			}
 		}
