@@ -53,7 +53,7 @@ int left_dist = 0;
 
 // opencv 관령 변수
 int line_state = 0;
-int is_two_line = 0;
+int line_count = 0;
 int station_area = 0;
 int traffic_color = GREEN;
 
@@ -103,7 +103,7 @@ void cameraCallback(const camera_opencv::TrafficState::ConstPtr &msg)
 	line_state = msg->line_state;
 	station_area = msg->station_area;
 	traffic_color = msg->traffic_color;
-	is_two_line = msg->is_two_line;
+	line_count = msg->line_count;
 }
 
 void gettingOnStopCallback(const std_msgs::UInt16::ConstPtr &msg)
@@ -172,7 +172,7 @@ int main(int argc, char **argv)
 					servo_msg.data = 75 + (line_state * line_state_control);
 					if(line_state == 0)
 					{
-						if(is_two_line == 0)
+						if(line_count != 0)
 						{
 							servo_msg.data = pre_servo_val;
 						}
