@@ -11,7 +11,7 @@
 
 		<param name="basic_motor_pwm" type="int" value="30"/>
 
-		<param name="line_state_control" type="int" value="1"/>
+		<param name="line_state_control" type="int" value="50"/>
 	</node>
 	<!-- <node pkg="sonar_interface" type="bus_stop_interface" name="bus_stop_interface"/> -->
 	<!-- <node pkg="camera_opencv" type="camera_opencv_node" name="camera_opencv_node"/> -->

@@ -67,11 +67,9 @@ float duration_sec = 0;
 // 기본 모터 속력
 int basic_motor_pwm = 30;
 
-std::mutex m;
+// std::mutex m;
 
 int line_state_control = 1;
-
-int pre_servo_val = 75;
 
 // launch 파일 파라미터
 void initParams(ros::NodeHandle *nh_priv)
@@ -140,7 +138,7 @@ int main(int argc, char **argv)
 
 	while (ros::ok())
 	{
-		std::lock_guard<std::mutex> lock(m);
+		//std::lock_guard<std::mutex> lock(m);
 
 		begin_s = ros::Time::now();
 		// 주행모드
@@ -167,29 +165,16 @@ int main(int argc, char **argv)
 			{
 				// opencv에서 차선 각도 받아서 서보모터 각도 바꾸기
 				// 이상치가 오면 전의 값으로 대체
-				if(line_state >= -75 && line_state <= 150)
+
+				if (line_count == 0)
+				{
+					servo_msg.data = 150;
+					motor_msg.data = 5;
+				}
+				else
 				{
 					servo_msg.data = 75 + (line_state * line_state_control);
-					if(line_state == 0)
-					{
-						if(line_count != 0)
-						{
-							servo_msg.data = pre_servo_val;
-						}
-					}
-					if (servo_msg.data != pre_servo_val)
-					{
-						duration_sec = 0.1;
-						motor_msg.data = 15;
-					}
-				}  
-				else 
-				{
-					servo_msg.data = pre_servo_val;
 				}
-				
-				pre_servo_val = servo_msg.data;
-
 			}
 		}
 		// 장애물 만날경우
