@@ -224,12 +224,10 @@ int main(int argc, char **argv)
 				}
 				
 
-				// if(pre_servo_val != PD)
-				// {
-				// 	duration_sec = 0.05;
-				// }
-
-				pre_servo_val = PD;
+				if (line_count != 0)
+				{
+					pre_servo_val = PD;
+				}
 			}
 		}
 		// 장애물 만날경우

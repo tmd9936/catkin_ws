@@ -27,6 +27,7 @@
 	</node>
 
 	<node pkg="camera_opencv" type="camera_opencv_node" name="camera_opencv_node" args="0">
+		<param name="boundary" type="double" value="0.15"/>
 	</node>
 
 	<include file="$(find object_detection_gl_ros)/launch/view_object_detection_gl_ros.launch"></include>
