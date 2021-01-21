@@ -77,6 +77,7 @@ int lastError = 0;
 double dt = 0.0;
 
 double kp = 0.4;
+double kd_val = 0.65;
 double kd = kp * 0.65;
 
 double derivative = 0.0;
@@ -100,6 +101,10 @@ void initParams(ros::NodeHandle *nh_priv)
 	nh_priv->param("basic_motor_pwm", basic_motor_pwm, basic_motor_pwm);
 
 	nh_priv->param("boundary", boundary, boundary);
+
+	nh_priv->param("kp", kp, kp);
+	nh_priv->param("kd_val", kd_val, kd_val);
+
 }
 
 void lidarCallback(const object_detection_gl_ros::Distance::ConstPtr &msg)
@@ -147,6 +152,8 @@ int main(int argc, char **argv)
 	ros::Rate loop_rate(50);
 
 	initParams(&nh_priv);
+
+	kp = kd * kd_val;
 
 	while (ros::ok())
 	{
@@ -199,7 +206,7 @@ int main(int argc, char **argv)
 					{
 						servo_msg.data = 150;
 					}
-					else if( 75 + PD < 0)
+					else if(75 + PD < 0)
 					{
 						servo_msg.data = 0;
 					}

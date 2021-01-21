@@ -12,6 +12,9 @@
 		<param name="basic_motor_pwm" type="int" value="30"/>
 
 		<param name="boundary" type="int" value="5"/>
+
+		<param name="kp" type="double" value="0.4"/>
+		<param name="kd_val" type="double" value="0.65"/>
 	</node>
 	<!-- <node pkg="sonar_interface" type="bus_stop_interface" name="bus_stop_interface"/> -->
 	
