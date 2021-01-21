@@ -195,24 +195,31 @@ int main(int argc, char **argv)
 				PD = int(line_state + derivative + proportional);
 
 				lastError = error;
-
-				if (line_state <= boundary && line_state >= boundary*(-1))
+				
+				if (line_count == 0)
 				{
-					servo_msg.data = 75;
+					servo_msg.data = pre_servo_val;
 				}
 				else
 				{
-					if (75 + PD > 150)
+					if (line_state <= boundary && line_state >= boundary*(-1))
 					{
-						servo_msg.data = 150;
-					}
-					else if(75 + PD < 0)
-					{
-						servo_msg.data = 0;
+						servo_msg.data = 75;
 					}
 					else
 					{
-						servo_msg.data = 75 + PD;
+						if (75 + PD > 150)
+						{
+							servo_msg.data = 150;
+						}
+						else if(75 + PD < 0)
+						{
+							servo_msg.data = 0;
+						}
+						else
+						{
+							servo_msg.data = 75 + PD;
+						}
 					}
 				}
 				
