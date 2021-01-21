@@ -29,9 +29,6 @@ Servo servo;
 int motorDirPin = 9;
 int motorPWMPin = 5;
 
-int motor_val = 30;
-int pre_motor_val = 30;
-
 //void doTurn(bool dir, int vel){
 //  digitalWrite(motorDirPin, dir);
 //  analogWrite(motorPWMPin, vel);
@@ -45,15 +42,13 @@ void servo_cb( const std_msgs::UInt16& cmd_msg){
 void motor_cb( const std_msgs::UInt16& motor_msg){
   digitalWrite(motorDirPin, LOW);
   if(motor_msg.data == 0)
-  {
-    
+  {  
     analogWrite(motorPWMPin, 0);
   }
-  else if(motor_msg.data > 0 && motor_msg.data < 100)
+  else
   {
-    analogWrite(motorPWMPin, motor_val);
+    analogWrite(motorPWMPin, motor_msg.data);
   }
-  else{}
 
   //Serial.println(motor_msg.data);
 }

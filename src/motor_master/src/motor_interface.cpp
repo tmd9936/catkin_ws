@@ -65,11 +65,25 @@ int sub_flag = 0;
 // 정지할 시간(초)
 float duration_sec = 0;
 // 기본 모터 속력
-int basic_motor_pwm = 30;
+int basic_motor_pwm = 15;
 
-// std::mutex m;
+int boundary = 5;
 
-int line_state_control = 1;
+// PD제어 관련 변수
+ros::Time now;
+ros::Time last_time(0.);
+int error;
+int lastError = 0;
+double dt = 0.0;
+
+double kp = 0.4;
+double kd = kp * 0.65;
+
+double derivative = 0.0;
+double proportional = 0.0;
+int PD = 0; 
+
+int pre_servo_val = 0;
 
 // launch 파일 파라미터
 void initParams(ros::NodeHandle *nh_priv)
@@ -85,15 +99,15 @@ void initParams(ros::NodeHandle *nh_priv)
 
 	nh_priv->param("basic_motor_pwm", basic_motor_pwm, basic_motor_pwm);
 
-	nh_priv->param("line_state_control", line_state_control, line_state_control);
+	nh_priv->param("boundary", boundary, boundary);
 }
 
 void lidarCallback(const object_detection_gl_ros::Distance::ConstPtr &msg)
 {
 	front_dist = msg->front_dist;
 	left_dist = msg->left_dist;
-	//ROS_INFO("front_distttt = %d cm", front_dist);
-	//ROS_INFO("left_distttt = %d cm", left_dist);
+	//ROS_INFO("front_dist    =     %d cm", front_dist);
+	//ROS_INFO("left_dist     =     %d cm", left_dist);
 }
 
 void cameraCallback(const camera_opencv::TrafficState::ConstPtr &msg)
@@ -132,15 +146,14 @@ int main(int argc, char **argv)
 	spinner.start();
 	ros::Rate loop_rate(50);
 
-	ros::Time begin_s;
-
 	initParams(&nh_priv);
 
 	while (ros::ok())
 	{
 		//std::lock_guard<std::mutex> lock(m);
 
-		begin_s = ros::Time::now();
+		now = ros::Time::now();
+
 		// 주행모드
 		if (flag == DRIVE_MODE)
 		{
@@ -165,16 +178,44 @@ int main(int argc, char **argv)
 			{
 				// opencv에서 차선 각도 받아서 서보모터 각도 바꾸기
 				// 이상치가 오면 전의 값으로 대체
+				
+				// boundary == 경계
+				dt = now.toSec() - last_time.toSec();
+				error = abs(line_state);
 
-				if (line_count == 0)
+				derivative = kd * (error - lastError) / dt;
+				proportional = kp * error;
+				PD = int(line_state + derivative + proportional);
+
+				lastError = error;
+
+				if (line_state <= boundary && line_state >= boundary*(-1))
 				{
-					servo_msg.data = 150;
-					motor_msg.data = 5;
+					servo_msg.data = 75;
 				}
 				else
 				{
-					servo_msg.data = 75 + (line_state * line_state_control);
+					if (75 + PD > 150)
+					{
+						servo_msg.data = 150;
+					}
+					else if( 75 + PD < 0)
+					{
+						servo_msg.data = 0;
+					}
+					else
+					{
+						servo_msg.data = 75 + PD;
+					}
 				}
+				
+
+				// if(pre_servo_val != PD)
+				// {
+				// 	duration_sec = 0.05;
+				// }
+
+				pre_servo_val = PD;
 			}
 		}
 		// 장애물 만날경우
@@ -289,16 +330,16 @@ int main(int argc, char **argv)
 		}
 		else {}
 
-		ROS_INFO("flag = %d,  sub_flag = %d, sec = %f ", flag, sub_flag, ros::Time::now().toSec() - begin_s.toSec());
+		ROS_INFO("flag = %d,  sub_flag = %d, sec = %f ", flag, sub_flag, ros::Time::now().toSec() - now.toSec());
 
 		motor_val.publish(motor_msg);
 		servo_val.publish(servo_msg);
 		front_dist = 0;
 		ros::Duration(duration_sec).sleep();
-		//ROS_INFO("left distance %d", left_dist);
-
+		
 		ros::spinOnce();
 		loop_rate.sleep();
+		last_time = ros::Time::now();
 	}
 
 	spinner.stop();
