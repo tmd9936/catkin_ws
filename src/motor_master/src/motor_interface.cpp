@@ -100,6 +100,8 @@ int pre_right_line_count = 1;
 
 bool start_drive = false;
 
+int people_in_station = 0;
+
 // launch 파일 파라미터
 void initParams(ros::NodeHandle *nh_priv)
 {
@@ -143,7 +145,7 @@ void cameraCallback(const camera_opencv::TrafficState::ConstPtr &msg)
 
 void gettingOnStopCallback(const std_msgs::UInt16::ConstPtr &msg)
 {
-	return;
+	people_in_station = msg->data;
 }
 
 int main(int argc, char **argv)
@@ -163,7 +165,7 @@ int main(int argc, char **argv)
 
 	ros::Subscriber distance_sub = nh.subscribe("distances", 1, lidarCallback);
 	ros::Subscriber camera_opencv_sub = nh.subscribe("traffic_state", 1, cameraCallback);
-	//ros::Subscriber getting_on_stop_sub = nh.subscribe("getting_on_and_off_state", 1, gettingOnStopCallback)
+	ros::Subscriber getting_on_stop_sub = nh.subscribe("getting_on_and_off_state", 1, gettingOnStopCallback);
 
 	ros::AsyncSpinner spinner(1); //spin
 	spinner.start();
@@ -224,24 +226,27 @@ int main(int argc, char **argv)
 
 				if (sub_flag == USUALLY_DRIVE)
 				{
-
 					// 왼쪽 탈선
-					if ( pre_left_line_count == 1 
-							&& left_line_count == 0 && right_line_count == 1)
+					if ( (pre_left_line_count == 1 && pre_right_line_count == 0 && 
+						left_line_count == 0 && right_line_count == 1) || (
+						pre_left_line_count == 1 && pre_right_line_count == 0 && 
+						left_line_count == 0 && right_line_count == 0))
 					{
 						sub_flag = LEFT_OUT;
 						// 오른쪽으로 복귀
 						servo_msg.data = 140;
-						ROS_INFO("left out");
+						//ROS_INFO("left out");
 					}
 					// 오른쪽 탈선
-					else if (pre_right_line_count == 1 
-						&& left_line_count == 1 && right_line_count == 0 )
+					else if ( pre_left_line_count == 0 && pre_right_line_count == 1 && 
+						left_line_count == 1 && right_line_count == 0 || (
+						pre_left_line_count == 0 && pre_right_line_count == 1 && 
+						left_line_count == 0 && right_line_count == 0))
 					{
 						sub_flag = RIGHT_OUT;
 						// 왼쪽으로 복귀
 						servo_msg.data = 10;
-						ROS_INFO("right out");
+						//ROS_INFO("right out");
 					}
 					else
 					{
@@ -271,7 +276,7 @@ int main(int argc, char **argv)
 				}
 				else if (sub_flag == LEFT_OUT)
 				{
-					if(right_line_count == 1)
+					if(left_line_count == 1 && right_line_count == 1)
 					{
 						sub_flag = USUALLY_DRIVE;
 						servo_msg.data = 75;
@@ -283,7 +288,7 @@ int main(int argc, char **argv)
 				}
 				else if (sub_flag == RIGHT_OUT)
 				{
-					if(left_line_count == 1)
+					if(left_line_count == 1 && right_line_count == 1)
 					{
 						sub_flag = USUALLY_DRIVE;
 						servo_msg.data = 75;
@@ -293,11 +298,6 @@ int main(int argc, char **argv)
 						servo_msg.data = 10;
 					}
 				}
-
-				// ROS_INFO("left_line_count %d", left_line_count);
-				// ROS_INFO("right_line_count %d", right_line_count);
-				// ROS_INFO("pre_left_line_count %d", pre_left_line_count);
-				// ROS_INFO("pre_right_line_count %d", pre_right_line_count);
 			}
 		}
 		// 장애물 만날경우
@@ -421,16 +421,20 @@ int main(int argc, char **argv)
 			{
 				// 초음파 받아서 사람있는지 판별
 				// 있으면 계속 대기
-				//    motor_msg.data = 0;
+				if (people_in_station == 1)
+					motor_msg.data = 0;
 				// 없으면 조금 대기했다가 출발
-				   duration_sec = 1.5;
-				   flag = DRIVE_MODE;
-				   sub_flag = USUALLY_DRIVE;
+				else 
+				{
+					duration_sec = 0.5;
+					flag = DRIVE_MODE;
+					sub_flag = USUALLY_DRIVE;
+				}
 			}
 		}
 		else {}
 
-		//ROS_INFO("flag = %d,  sub_flag = %d, sec = %f ", flag, sub_flag, ros::Time::now().toSec() - now.toSec());
+		ROS_INFO("flag = %d,  sub_flag = %d, sec = %f ", flag, sub_flag, ros::Time::now().toSec() - now.toSec());
 
 		motor_val.publish(motor_msg);
 		servo_val.publish(servo_msg);

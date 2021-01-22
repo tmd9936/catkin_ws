@@ -18,7 +18,7 @@
 	</node>
 	<!-- <node pkg="sonar_interface" type="bus_stop_interface" name="bus_stop_interface"/> -->
 	
-	<arg name="arduino_port" default="/dev/ttyUSB1"/>
+	<arg name="arduino_port" default="/dev/ttyUSB0"/>
 
 	<node pkg="rosserial_python" type="serial_node.py" name="servo_serial_node" 
 		args="$(arg arduino_port)" respawn="true" respawn_delay="4" required="false" output="screen">
@@ -27,7 +27,7 @@
 	</node>
 
 	<node pkg="camera_opencv" type="camera_opencv_node" name="camera_opencv_node" args="0">
-		<param name="boundary" type="double" value="0.33"/>
+		<param name="boundary" type="double" value="0.5"/>
 	</node>
 
 	<!-- <include file="$(find object_detection_gl_ros)/launch/view_object_detection_gl_ros.launch"></include> -->
