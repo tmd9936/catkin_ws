@@ -15,6 +15,11 @@
 #define TRAFFIC_LIGHT_MODE 2
 #define STATION_MODE 3
 
+// 주행모드
+#define USUALLY_DRIVE 0
+#define LEFT_OUT 1
+#define RIGHT_OUT 2
+
 // BLOCK_MODE
 #define DIST_INIT_MODE 0
 #define RIGHT_TURN_MODE 1
@@ -26,6 +31,10 @@
 #define LINE_LT_AND_GO_MODE 7
 #define LINE_CHECK_INIT_MODE 8
 #define LINE_CHECK_MODE 9
+
+// 정류 모드
+#define FIND_STATION 0
+#define GETTING_ON_STOP_MODE 1
 
 // 신호등 색상
 #define RED 0
@@ -53,7 +62,8 @@ int left_dist = 0;
 
 // opencv 관령 변수
 int line_state = 0;
-int line_count = 0;
+int left_line_count = 0;
+int right_line_count = 0;
 int station_area = 0;
 int traffic_color = GREEN;
 
@@ -84,7 +94,11 @@ double derivative = 0.0;
 double proportional = 0.0;
 int PD = 0; 
 
-int pre_servo_val = 0;
+int pre_servo_val = 15;
+int pre_left_line_count = 1;
+int pre_right_line_count = 1;
+
+bool start_drive = 0;
 
 // launch 파일 파라미터
 void initParams(ros::NodeHandle *nh_priv)
@@ -105,6 +119,8 @@ void initParams(ros::NodeHandle *nh_priv)
 	nh_priv->param("kp", kp, kp);
 	nh_priv->param("kd_val", kd_val, kd_val);
 
+	pre_servo_val = basic_motor_pwm;
+
 }
 
 void lidarCallback(const object_detection_gl_ros::Distance::ConstPtr &msg)
@@ -120,7 +136,9 @@ void cameraCallback(const camera_opencv::TrafficState::ConstPtr &msg)
 	line_state = msg->line_state;
 	station_area = msg->station_area;
 	traffic_color = msg->traffic_color;
-	line_count = msg->line_count;
+	left_line_count = msg->left_line_count;
+	right_line_count = msg->right_line_count;
+
 }
 
 void gettingOnStopCallback(const std_msgs::UInt16::ConstPtr &msg)
@@ -161,6 +179,13 @@ int main(int argc, char **argv)
 
 		now = ros::Time::now();
 
+		if (!start_drive)
+		{
+			start_drive = true;
+			pre_left_line_count = left_line_count;
+			pre_right_line_count = pre_left_line_count;
+		}
+
 		// 주행모드
 		if (flag == DRIVE_MODE)
 		{
@@ -170,7 +195,7 @@ int main(int argc, char **argv)
 			if (front_dist < 30 && front_dist > 0)
 			{
 				flag = BLOCK_MODE;
-				sub_flag = 0;
+				sub_flag = DIST_INIT_MODE;
 			}
 			else if (traffic_color = RED)
 			{
@@ -180,11 +205,12 @@ int main(int argc, char **argv)
 			else if(station_area == STATION_AREA_ON)
 			{
 				flag = STATION_MODE;
+				sub_flag = FIND_STATION;
 			}
 			else
 			{
-				// opencv에서 차선 각도 받아서 서보모터 각도 바꾸기
-				// 이상치가 오면 전의 값으로 대체
+				// opencv에서 차선 degree 받아서 서보모터 degree 바꾸기
+				// 이상치가 오면 전의 value로 대체
 				
 				// boundary == 경계
 				dt = now.toSec() - last_time.toSec();
@@ -195,39 +221,76 @@ int main(int argc, char **argv)
 				PD = int(line_state + derivative + proportional);
 
 				lastError = error;
-				
-				if (line_count == 0)
+
+				if (sub_flag == USUALLY_DRIVE)
 				{
-					servo_msg.data = pre_servo_val;
-				}
-				else
-				{
-					if (line_state <= boundary && line_state >= boundary*(-1))
+
+					// 왼쪽 탈선
+					if (pre_right_line_count == 0 && pre_left_line_count == 1 
+							&& left_line_count == 0 && right_line_count == 1)
 					{
-						servo_msg.data = 75;
+						sub_flag == LEFT_OUT;
+						// 오른쪽으로 복귀
+						servo_msg.data = 140;
+					}
+					// 오른쪽 탈선
+					else if (pre_right_line_count == 1 && pre_left_line_count == 0 
+						&& left_line_count == 1 && right_line_count == 0)
+					{
+						sub_flag == RIGHT_OUT;
+						// 왼쪽으로 복귀
+						servo_msg.data = 10;
 					}
 					else
 					{
-						if (75 + PD > 150)
+						if (line_state <= boundary && line_state >= boundary*(-1))
 						{
-							servo_msg.data = 150;
-						}
-						else if(75 + PD < 0)
-						{
-							servo_msg.data = 0;
+							servo_msg.data = 75;
 						}
 						else
 						{
-							servo_msg.data = 75 + PD;
+							if (75 + PD > 150)
+							{
+								servo_msg.data = 150;
+							}
+							else if(75 + PD < 0)
+							{
+								servo_msg.data = 0;
+							}
+							else
+							{
+								servo_msg.data = 75 + PD;
+							}
 						}
 					}
 				}
-				
-
-				if (line_count != 0)
+				else if (sub_flag == LEFT_OUT)
 				{
-					pre_servo_val = PD;
+					if(left_line_count == 1 && right_line_count == 1)
+					{
+						sub_flag = USUALLY_DRIVE;
+						servo_msg.data = 75;
+					}
+					else 
+					{
+						servo_msg.data = 140;
+					}
 				}
+				else if (sub_flag == RIGHT_OUT)
+				{
+					if(left_line_count == 1 && right_line_count == 1)
+					{
+						sub_flag = USUALLY_DRIVE;
+						servo_msg.data = 75;
+					}
+					else 
+					{
+						servo_msg.data = 10;
+					}
+				}
+
+				pre_left_line_count = left_line_count;
+				pre_right_line_count = pre_left_line_count;
 			}
 		}
 		// 장애물 만날경우
@@ -291,6 +354,7 @@ int main(int argc, char **argv)
 				{
 				}
 			}
+			// 장애물 넘기위해 왼쪽으로 턴
 			else if (sub_flag == LINE_LEFT_TURN_MODE)
 			{
 				motor_msg.data = 0;
@@ -298,6 +362,7 @@ int main(int argc, char **argv)
 				duration_sec = line_left_turn_mode_duration;
 				sub_flag = LINE_LT_AND_GO_MODE;
 			}
+			// 왼쪽으로 턴하고 움직이기
 			else if (sub_flag == LINE_LT_AND_GO_MODE)
 			{
 				motor_msg.data = basic_motor_pwm;
@@ -314,13 +379,13 @@ int main(int argc, char **argv)
 			}
 			else if (sub_flag == LINE_CHECK_MODE)
 			{
-				// opencv에서 받은 라인의 각도가 0이 되면 빠져나가기
-				if(line_state == 0) 
+				// 차선이 2개 보이면 빠져나가기
+				if(left_line_count == 1 && right_line_count == 1) 
 				{
-					motor_msg.data = 0;
-					servo_msg.data = 75;
-					duration_sec = 1;
-					sub_flag = 0;
+					// motor_msg.data = 0;
+					// servo_msg.data = 75;
+					// duration_sec = 1;
+					sub_flag = USUALLY_DRIVE;
 					flag = DRIVE_MODE;
 				}
 			}
@@ -332,13 +397,29 @@ int main(int argc, char **argv)
 			if (traffic_color == GREEN)
 			{
 				flag = DRIVE_MODE;
+				sub_flag = USUALLY_DRIVE;
 			}
 			else {}
 
 		}
 		else if (flag == STATION_MODE)
 		{
-			
+			if (sub_flag == FIND_STATION)
+			{
+				duration_sec = 1.5;
+				motor_msg.data = 0;
+				sub_flag = GETTING_ON_STOP_MODE;
+			}
+			else if (sub_flag == GETTING_ON_STOP_MODE)
+			{
+				// 초음파 받아서 사람있는지 판별
+				// 있으면 계속 대기
+				//    motor_msg.data = 0;
+				// 없으면 조금 대기했다가 출발
+				   duration_sec = 1.5;
+				   flag = DRIVE_MODE;
+				   sub_flag = USUALLY_DRIVE;
+			}
 		}
 		else {}
 
