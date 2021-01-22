@@ -98,7 +98,7 @@ int pre_servo_val = 15;
 int pre_left_line_count = 1;
 int pre_right_line_count = 1;
 
-bool start_drive = 0;
+bool start_drive = false;
 
 // launch 파일 파라미터
 void initParams(ros::NodeHandle *nh_priv)
@@ -226,20 +226,22 @@ int main(int argc, char **argv)
 				{
 
 					// 왼쪽 탈선
-					if (pre_right_line_count == 0 && pre_left_line_count == 1 
+					if ( pre_left_line_count == 1 
 							&& left_line_count == 0 && right_line_count == 1)
 					{
-						sub_flag == LEFT_OUT;
+						sub_flag = LEFT_OUT;
 						// 오른쪽으로 복귀
 						servo_msg.data = 140;
+						ROS_INFO("left out");
 					}
 					// 오른쪽 탈선
-					else if (pre_right_line_count == 1 && pre_left_line_count == 0 
-						&& left_line_count == 1 && right_line_count == 0)
+					else if (pre_right_line_count == 1 
+						&& left_line_count == 1 && right_line_count == 0 )
 					{
-						sub_flag == RIGHT_OUT;
+						sub_flag = RIGHT_OUT;
 						// 왼쪽으로 복귀
 						servo_msg.data = 10;
+						ROS_INFO("right out");
 					}
 					else
 					{
@@ -263,10 +265,13 @@ int main(int argc, char **argv)
 							}
 						}
 					}
+					pre_servo_val = servo_msg.data;
+					pre_left_line_count = left_line_count;
+					pre_right_line_count = right_line_count;
 				}
 				else if (sub_flag == LEFT_OUT)
 				{
-					if(left_line_count == 1 && right_line_count == 1)
+					if(right_line_count == 1)
 					{
 						sub_flag = USUALLY_DRIVE;
 						servo_msg.data = 75;
@@ -278,7 +283,7 @@ int main(int argc, char **argv)
 				}
 				else if (sub_flag == RIGHT_OUT)
 				{
-					if(left_line_count == 1 && right_line_count == 1)
+					if(left_line_count == 1)
 					{
 						sub_flag = USUALLY_DRIVE;
 						servo_msg.data = 75;
@@ -289,8 +294,10 @@ int main(int argc, char **argv)
 					}
 				}
 
-				pre_left_line_count = left_line_count;
-				pre_right_line_count = pre_left_line_count;
+				// ROS_INFO("left_line_count %d", left_line_count);
+				// ROS_INFO("right_line_count %d", right_line_count);
+				// ROS_INFO("pre_left_line_count %d", pre_left_line_count);
+				// ROS_INFO("pre_right_line_count %d", pre_right_line_count);
 			}
 		}
 		// 장애물 만날경우
@@ -423,7 +430,7 @@ int main(int argc, char **argv)
 		}
 		else {}
 
-		ROS_INFO("flag = %d,  sub_flag = %d, sec = %f ", flag, sub_flag, ros::Time::now().toSec() - now.toSec());
+		//ROS_INFO("flag = %d,  sub_flag = %d, sec = %f ", flag, sub_flag, ros::Time::now().toSec() - now.toSec());
 
 		motor_val.publish(motor_msg);
 		servo_val.publish(servo_msg);
