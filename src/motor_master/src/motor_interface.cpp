@@ -193,13 +193,13 @@ int main(int argc, char **argv)
 		{
 			motor_msg.data = basic_motor_pwm;
 			duration_sec = 0;
-			// 앞의 장애물이 30이하면 멈추고 장애물 감지 모드로 변경
-			if (front_dist < 30 && front_dist > 0)
+			// 앞의 장애물에 멈추고 장애물 감지 모드로 변경
+			if (front_dist < 45 && front_dist > 0)
 			{
 				flag = BLOCK_MODE;
 				sub_flag = DIST_INIT_MODE;
 			}
-			else if (traffic_color = RED)
+			else if (traffic_color == RED)
 			{
 				flag = TRAFFIC_LIGHT_MODE;
 				motor_msg.data = 0;
@@ -208,6 +208,7 @@ int main(int argc, char **argv)
 			{
 				flag = STATION_MODE;
 				sub_flag = FIND_STATION;
+				duration_sec = 2.2;
 			}
 			else
 			{
@@ -220,8 +221,10 @@ int main(int argc, char **argv)
 
 				derivative = kd * (error - lastError) / dt;
 				proportional = kp * error;
-				PD = int(line_state + derivative + proportional);
-
+				PD = int(derivative + proportional);
+				if(line_state < 0)
+					PD *= (-1);
+				//ROS_INFO("PD %d,  dt %f", PD, dt);
 				lastError = error;
 
 				if (sub_flag == USUALLY_DRIVE)
@@ -250,7 +253,7 @@ int main(int argc, char **argv)
 					}
 					else
 					{
-						if (line_state <= boundary && line_state >= boundary*(-1))
+						if (PD <= boundary && PD >= boundary*(-1))
 						{
 							servo_msg.data = 75;
 						}
@@ -276,10 +279,11 @@ int main(int argc, char **argv)
 				}
 				else if (sub_flag == LEFT_OUT)
 				{
-					if(left_line_count == 1 && right_line_count == 1)
+					if(right_line_count == 1)
 					{
 						sub_flag = USUALLY_DRIVE;
 						servo_msg.data = 75;
+						duration_sec = 0.3;
 					}
 					else 
 					{
@@ -288,10 +292,11 @@ int main(int argc, char **argv)
 				}
 				else if (sub_flag == RIGHT_OUT)
 				{
-					if(left_line_count == 1 && right_line_count == 1)
+					if(left_line_count == 1)
 					{
 						sub_flag = USUALLY_DRIVE;
 						servo_msg.data = 75;
+						duration_sec = 0.3;
 					}
 					else 
 					{
@@ -314,7 +319,7 @@ int main(int argc, char **argv)
 			else if (sub_flag == RIGHT_TURN_MODE)
 			{
 				motor_msg.data = 0;
-				servo_msg.data = 120;
+				servo_msg.data = 150;
 				duration_sec = right_turn_mode_duration;
 				sub_flag = RT_AND_GO_MODE;
 			}
@@ -329,7 +334,7 @@ int main(int argc, char **argv)
 			else if (sub_flag == BLOCK_LEFT_TURN_MODE)
 			{
 				motor_msg.data = 0;
-				servo_msg.data = 30;
+				servo_msg.data = 0;
 				duration_sec = block_left_turn_mode_duration;
 				sub_flag = BLOCK_LT_AND_GO_MODE;
 			}
@@ -344,14 +349,14 @@ int main(int argc, char **argv)
 			else if (sub_flag == BLOCK_PASS_MODE)
 			{
 				servo_msg.data = 75;
-				// 라이다에서 받은 맨왼쪽의 값이 15이하면 계속진행
-				if (left_dist > 0 && left_dist <= 15)
+				// 라이다에서 받은 맨왼쪽의 값이 55이하면 계속진행
+				if (left_dist > 0 && left_dist <= 55)
 				{
 					motor_msg.data = basic_motor_pwm;
 					duration_sec = 0;
 				}
-				// 15이상이면 장애물이 없다고 판단.
-				else if (left_dist > 15)
+				// 55이상이면 장애물이 없다고 판단.
+				else if (left_dist > 55)
 				{
 					motor_msg.data = 0;
 					duration_sec = block_pass_mode_duration;
@@ -365,7 +370,7 @@ int main(int argc, char **argv)
 			else if (sub_flag == LINE_LEFT_TURN_MODE)
 			{
 				motor_msg.data = 0;
-				servo_msg.data = 30;
+				servo_msg.data = 0;
 				duration_sec = line_left_turn_mode_duration;
 				sub_flag = LINE_LT_AND_GO_MODE;
 			}
@@ -380,7 +385,7 @@ int main(int argc, char **argv)
 			else if (sub_flag == LINE_CHECK_INIT_MODE)
 			{
 				motor_msg.data = basic_motor_pwm;
-				servo_msg.data = 120;
+				servo_msg.data = 150;
 				duration_sec = line_check_init_mode_duration;
 				sub_flag = LINE_CHECK_MODE;
 			}
@@ -440,10 +445,11 @@ int main(int argc, char **argv)
 		servo_val.publish(servo_msg);
 		front_dist = 0;
 		ros::Duration(duration_sec).sleep();
-		
+
+		last_time = ros::Time::now();
+		ROS_INFO("last_time %f", last_time.toSec());
 		ros::spinOnce();
 		loop_rate.sleep();
-		last_time = ros::Time::now();
 	}
 
 	spinner.stop();
