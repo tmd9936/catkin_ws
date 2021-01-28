@@ -102,6 +102,8 @@ bool start_drive = false;
 
 int people_in_station = 0;
 
+int pre_left_distance = 0;
+
 // launch 파일 파라미터
 void initParams(ros::NodeHandle *nh_priv)
 {
@@ -193,22 +195,23 @@ int main(int argc, char **argv)
 		{
 			motor_msg.data = basic_motor_pwm;
 			duration_sec = 0;
+			if (traffic_color == RED)
+			{
+				flag = TRAFFIC_LIGHT_MODE;
+				motor_msg.data = 0;
+			}
 			// 앞의 장애물에 멈추고 장애물 감지 모드로 변경
-			if (front_dist < 45 && front_dist > 0)
+			else if (front_dist < 45 && front_dist > 0 && traffic_color != RED && traffic_color != GREEN)
 			{
 				flag = BLOCK_MODE;
 				sub_flag = DIST_INIT_MODE;
-			}
-			else if (traffic_color == RED)
-			{
-				flag = TRAFFIC_LIGHT_MODE;
 				motor_msg.data = 0;
 			}
 			else if(station_area == STATION_AREA_ON)
 			{
 				flag = STATION_MODE;
 				sub_flag = FIND_STATION;
-				duration_sec = 2.2;
+				duration_sec = 2.4;
 			}
 			else
 			{
@@ -283,7 +286,10 @@ int main(int argc, char **argv)
 					{
 						sub_flag = USUALLY_DRIVE;
 						servo_msg.data = 75;
-						duration_sec = 0.3;
+						if (front_dist > 60)
+							duration_sec = 0.1;
+						else
+							duration_sec = 0.0;
 					}
 					else 
 					{
@@ -296,7 +302,10 @@ int main(int argc, char **argv)
 					{
 						sub_flag = USUALLY_DRIVE;
 						servo_msg.data = 75;
-						duration_sec = 0.3;
+						if (front_dist > 60)
+							duration_sec = 0.1;
+						else
+							duration_sec = 0.0;
 					}
 					else 
 					{
@@ -352,8 +361,21 @@ int main(int argc, char **argv)
 				// 라이다에서 받은 맨왼쪽의 값이 55이하면 계속진행
 				if (left_dist > 0 && left_dist <= 55)
 				{
+					if (left_dist > 32)
+					{
+						servo_msg.data = 25;
+					}
+					else if(left_dist < 27)
+					{
+						servo_msg.data = 120;
+					}
+					else
+					{
+						servo_msg.data = 75;
+					}
 					motor_msg.data = basic_motor_pwm;
 					duration_sec = 0;
+					pre_left_distance = left_dist;
 				}
 				// 55이상이면 장애물이 없다고 판단.
 				else if (left_dist > 55)
@@ -378,7 +400,7 @@ int main(int argc, char **argv)
 			else if (sub_flag == LINE_LT_AND_GO_MODE)
 			{
 				motor_msg.data = basic_motor_pwm;
-				duration_sec = line_lt_and_go_mode_duration;
+				duration_sec = line_lt_and_go_mode_duration * pre_left_distance;
 				sub_flag = LINE_CHECK_INIT_MODE;
 			}
 			//차선 보일때까진 움직이기
@@ -447,7 +469,7 @@ int main(int argc, char **argv)
 		ros::Duration(duration_sec).sleep();
 
 		last_time = ros::Time::now();
-		ROS_INFO("last_time %f", last_time.toSec());
+		// ROS_INFO("last_time %f", last_time.toSec());
 		ros::spinOnce();
 		loop_rate.sleep();
 	}

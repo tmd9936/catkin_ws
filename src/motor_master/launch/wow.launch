@@ -1,13 +1,13 @@
 <launch>
 	<node pkg="motor_master" type="motor_interface" name="motor_interface">
 		<param name="right_turn_mode_duration" type="double" value="1.4"/>
-		<param name="rt_and_go_mode_duration" type="double" value="2.3"/>
-		<param name="block_left_turn_mode_duration" type="double" value="2.0"/>
-		<param name="block_lt_and_go_mode_duration" type="double" value="2.2"/>
+		<param name="rt_and_go_mode_duration" type="double" value="2.7"/>
+		<param name="block_left_turn_mode_duration" type="double" value="2.4"/>
+		<param name="block_lt_and_go_mode_duration" type="double" value="1.8"/>
 		<param name="block_pass_mode_duration" type="double" value="0.5"/>
-		<param name="line_left_turn_mode" type="double" value="1.1"/>
-		<param name="line_lt_and_go_mode_duration" type="double" value="2.0"/>
-		<param name="line_check_init_mode" type="double" value="0.2"/>
+		<param name="line_left_turn_mode_duration" type="double" value="1.1"/>
+		<param name="line_lt_and_go_mode_duration" type="double" value="0.0675"/>
+		<param name="line_check_init_mode" type="double" value="0.5"/>
 
 		<param name="basic_motor_pwm" type="int" value="20"/>
 
